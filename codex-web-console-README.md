@@ -1,34 +1,38 @@
 # Codex Web Console
 
-This is a standalone web console that talks directly to `codex app-server` over JSON-RPC. It does **not** hook into VS Code.
+这是一个独立的 Web 控制台，直接与 `codex app-server` 通信（JSON‑RPC）。不依赖 VS Code。
 
-## Start
+## 启动
 
-1. Ensure Codex CLI is installed (npm global is OK).
-2. The web console auto-detects `codex` from `CODEX_PATH`, common npm global locations, or `PATH`.
-3. Run:
+1. 安装 Codex CLI（npm 全局安装即可）
+2. 运行：
 
 ```powershell
 node codex-web-console.js
 ```
 
-Open `http://localhost:8800` in a browser. If you use a tunnel, forward this port.
+默认地址：`http://localhost:8800`
 
-## Full Access mode
+## 模式
 
-- This console runs **Full Access** only.
+- 仅保留 **Full Access** 模式
 
-## Notes
+## 配置
 
-- To add auth for tunnel access, set `authToken` in `codex-web-console.config.json` and append `?token=YOUR_TOKEN` to the URL.
+文件：`codex-web-console.config.json`
 
-## Two ways to start Codex
+常用项：
+- `port`: 端口（默认 8800）
+- `authToken`: 可选鉴权 token
+- `codexPath`: 默认为 `codex`，会自动从 `CODEX_PATH` / npm 全局路径 / PATH 解析
 
-1. Web console spawns Codex (default, recommended):
-   - `node codex-web-console.js`
+示例配置：`codex-web-console.config.example.json`
 
-2. Codex CLI directly (for debugging only):
-   - `codex app-server --analytics-default-enabled`
+## Tunnel 访问
 
-   This runs the app server in your terminal for inspection. The web console does **not** attach
-   to an already-running app-server; it always spawns its own Codex process.
+若用隧道访问，设置 `authToken`，URL 加 `?token=YOUR_TOKEN`。
+
+## 备注
+
+- 本控制台会自行启动 `codex app-server` 进程
+- 不会附加到已有的 app-server
