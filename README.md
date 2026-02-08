@@ -1,15 +1,14 @@
-# Codex Web Tools
+# Codex Web Console
 
-这个仓库包含三套工具，用于把 Codex 的终端能力变成可在浏览器/手机上操作的界面。
+把 `codex app-server` 变成手机可用的网页控制台，专注 **Full Access** 工作流。
 
-## 推荐使用：Codex Web Console
+## 功能
+- 直接对接 `codex app-server`（JSON‑RPC）
+- 会话管理器：查看/打开/重命名/归档/新建会话
+- 审批面板 + 事件流
+- 手机端适配（无横向滚动，分区滚动）
 
-- 直接与 `codex app-server` 通信（JSON‑RPC）
-- 内置会话管理器（查看/打开/重命名/归档）
-- 支持审批面板与事件流
-- 当前仅保留 **Full Access** 模式
-
-启动：
+## 快速开始
 
 ```powershell
 node codex-web-console.js
@@ -17,50 +16,27 @@ node codex-web-console.js
 
 默认地址：`http://localhost:8800`
 
+## 配置
+
 配置文件：`codex-web-console.config.json`
-- 已默认自动查找 `codex`（`CODEX_PATH` / 常见 npm 路径 / PATH）
-- 如需鉴权访问，设置 `authToken`，访问时带 `?token=YOUR_TOKEN`
+
+常用字段：
+- `port`: Web 控制台端口（默认 `8800`）
+- `publicDir`: 前端目录（默认 `./codex-web-console-public`）
+- `authToken`: 访问鉴权（设置后需 `?token=YOUR_TOKEN`）
+- `codexPath`: Codex 可执行文件路径（默认 `auto`，会自动在 npm 安装路径与 PATH 里搜索）
+- `codexArgs`: 默认为 `["app-server","--analytics-default-enabled"]`
+- `cwd`: Codex 工作目录
 
 示例配置：`codex-web-console.config.example.json`
 
-## VS Code 扩展抓包工具（调试用）
+## 手机访问
 
-`codex-proxy.js` 用于抓取 VS Code 扩展与 `codex app-server` 的 JSON‑RPC 数据流。
+使用你自己的 tunnel 暴露端口即可（本项目不内置 tunnel）。
 
-启动：
+## 目录结构
+- `codex-web-console.js`：后端服务（启动 Codex + WebSocket 转发）
+- `codex-web-console-public/`：前端
 
-```bash
-node codex-proxy.js app-server --analytics-default-enabled
-```
-
-默认地址：`http://localhost:8799`
-
-配置文件：`codex-proxy.config.json`
-
-示例配置：`codex-proxy.config.example.json`
-
-## 旧版网关（server.js）
-
-`server.js` 是早期 CLI 网关实现，支持 direct/managed 启动模式，仅保留以便参考。
-
-启动：
-
-```bash
-npm install
-npm run start
-```
-
-默认地址：`http://localhost:8787`
-
-配置文件：`config.json`
-
-示例配置：`config.example.json`
-
-## 手机访问（Tunnel）
-
-将本机端口通过自有 tunnel 暴露即可（此项目不内置 tunnel）。
-
-## 发布到 GitHub 前的建议
-
-- 使用示例配置文件，避免提交本机路径或 token
-- `.gitignore` 已忽略日志、依赖、VS Code 配置和 VSIX
+## 说明
+本项目仅保留 Codex Web Console，一切旧工具已移除。

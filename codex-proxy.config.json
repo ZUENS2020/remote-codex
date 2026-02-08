@@ -1,7 +1,0 @@
-{
-  "port": 8799,
-  "publicDir": "./codex-proxy-public",
-  "authToken": "",
-  "realCodexPath": "codex",
-  "logFile": ""
-}
