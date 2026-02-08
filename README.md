@@ -24,7 +24,7 @@ node codex-web-console.js
 - `port`: Web 控制台端口（默认 `8800`）
 - `publicDir`: 前端目录（默认 `./codex-web-console-public`）
 - `authToken`: 访问鉴权（设置后需 `?token=YOUR_TOKEN`）
-- `codexPath`: Codex 可执行文件路径（默认 `auto`，会自动在 npm 安装路径与 PATH 里搜索）
+- `codexPath`: Codex 可执行文件路径（默认 `auto`，会自动在 npm 全局安装目录与 PATH 里搜索）
 - `codexArgs`: 默认为 `["app-server","--analytics-default-enabled"]`
 - `cwd`: Codex 工作目录
 

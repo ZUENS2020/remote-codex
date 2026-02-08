@@ -2,7 +2,7 @@
   "port": 8800,
   "publicDir": "./codex-web-console-public",
   "authToken": "",
-  "codexPath": "codex",
+  "codexPath": "auto",
   "codexArgs": ["app-server", "--analytics-default-enabled"],
   "cwd": ".",
   "logFile": "",

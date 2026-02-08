@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const url = require("url");
-const { spawn } = require("child_process");
+const { spawn, execFileSync } = require("child_process");
 const WebSocket = require("ws");
 
 const CONFIG_PATH = path.join(__dirname, "codex-web-console.config.json");
@@ -78,9 +78,55 @@ function resolveSpawnCommand() {
   return { command: exe, argsPrefix: [] };
 }
 
+function findNpmBinary() {
+  const isWin = process.platform === "win32";
+  const fromEnv = process.env.npm_execpath;
+  if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+  const nodeDir = path.dirname(process.execPath);
+  if (isWin) {
+    const npmCmd = path.join(nodeDir, "npm.cmd");
+    if (fs.existsSync(npmCmd)) return npmCmd;
+    const npmExe = path.join(nodeDir, "npm.exe");
+    if (fs.existsSync(npmExe)) return npmExe;
+  } else {
+    const npmBin = path.join(nodeDir, "npm");
+    if (fs.existsSync(npmBin)) return npmBin;
+  }
+  return "npm";
+}
+
+function runCommand(command, args) {
+  try {
+    const isWin = process.platform === "win32";
+    const lower = command.toLowerCase();
+    const isCmd = isWin && (lower.endsWith(".cmd") || lower.endsWith(".bat"));
+    if (isCmd) {
+      const quoted = [command, ...args].map((p) => {
+        if (!p) return "";
+        return p.includes(" ") ? `"${p}"` : p;
+      }).join(" ");
+      return execFileSync("cmd.exe", ["/d", "/s", "/c", quoted], {
+        encoding: "utf8",
+        windowsHide: true,
+        timeout: 2000
+      }).trim();
+    }
+    return execFileSync(command, args, {
+      encoding: "utf8",
+      windowsHide: true,
+      timeout: 2000
+    }).trim();
+  } catch {
+    return "";
+  }
+}
+
 function resolveCodexExecutable(requested) {
   const trimmed = typeof requested === "string" ? requested.trim() : "";
-  if (trimmed && trimmed.toLowerCase() !== "auto") return trimmed;
+  const lowered = trimmed.toLowerCase();
+  const explicit = trimmed && lowered !== "auto" && lowered !== "codex";
+  if (explicit) return trimmed;
+  const fallback = trimmed || "codex";
 
   if (process.env.CODEX_PATH) return process.env.CODEX_PATH;
 
@@ -104,7 +150,36 @@ function resolveCodexExecutable(requested) {
     }
   }
 
-  return "codex";
+  const npmBin = findNpmBinary();
+  const npmGlobalBin = runCommand(npmBin, ["bin", "-g"]);
+  if (npmGlobalBin) {
+    const binCandidates = [];
+    if (process.platform === "win32") {
+      binCandidates.push(path.join(npmGlobalBin, "codex.cmd"));
+      binCandidates.push(path.join(npmGlobalBin, "codex.exe"));
+    } else {
+      binCandidates.push(path.join(npmGlobalBin, "codex"));
+    }
+    for (const candidate of binCandidates) {
+      if (candidate && fs.existsSync(candidate)) return candidate;
+    }
+  }
+
+  const npmPrefix = runCommand(npmBin, ["prefix", "-g"]) || process.env.NPM_CONFIG_PREFIX || "";
+  if (npmPrefix) {
+    const prefixCandidates = [];
+    if (process.platform === "win32") {
+      prefixCandidates.push(path.join(npmPrefix, "codex.cmd"));
+      prefixCandidates.push(path.join(npmPrefix, "codex.exe"));
+    } else {
+      prefixCandidates.push(path.join(npmPrefix, "bin", "codex"));
+    }
+    for (const candidate of prefixCandidates) {
+      if (candidate && fs.existsSync(candidate)) return candidate;
+    }
+  }
+
+  return fallback || "codex";
 }
 
 function writeRpc(message) {
