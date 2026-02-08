@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codex Web Control</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="title">Codex Web Control</div>
+    <div class="controls">
+      <select id="mode">
+        <option value="chat">Chat</option>
+        <option value="agent">Agent</option>
+        <option value="full">Full Access</option>
+      </select>
+      <button id="restart">Restart</button>
+      <span id="status">offline</span>
+    </div>
+  </header>
+
+  <main id="log"></main>
+
+  <footer>
+    <textarea id="input" rows="2" placeholder="输入命令或消息..."></textarea>
+    <button id="send">发送</button>
+    <div id="approve" class="approve hidden">
+      <span>需要审批</span>
+      <button id="allow">允许</button>
+      <button id="deny">拒绝</button>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# Local artifacts
+openai.chatgpt-*/
+*.vsix
+
+# OS
+.DS_Store
+Thumbs.db

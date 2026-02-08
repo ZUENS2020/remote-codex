@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Codex Web Console</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn" id="toggle-left" aria-label="Toggle threads">Menu</button>
+      <div class="brand">
+        <div class="brand-title">Codex</div>
+        <div class="brand-sub">Web Console</div>
+      </div>
+      <div class="status" id="conn-status">Disconnected</div>
+      <div class="spacer"></div>
+      <div class="mode-inline">
+        <div class="mode-pill">Full Access</div>
+        <select id="approval-select" title="Approval policy">
+          <option value="on-request" selected>Ask on request</option>
+          <option value="untrusted">Untrusted only</option>
+          <option value="on-failure">On failure</option>
+          <option value="never">Never ask</option>
+        </select>
+      </div>
+      <button class="icon-btn" id="open-sessions" aria-label="Open session manager">Sessions</button>
+      <button class="icon-btn" id="toggle-right" aria-label="Toggle panels">Panels</button>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar left" id="sidebar-left">
+        <div class="sidebar-section">
+          <div class="section-header">
+            <span>Threads</span>
+            <button class="btn small" id="new-thread">New</button>
+          </div>
+          <input class="filter-input" id="thread-search" placeholder="Search threads" />
+          <div class="thread-list" id="thread-list"></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="chat-header">
+          <div>
+            <div class="chat-title" id="chat-title">No thread</div>
+            <div class="chat-meta" id="chat-meta"></div>
+          </div>
+          <div class="chat-actions">
+            <button class="btn small" id="refresh-thread">Refresh</button>
+            <button class="btn small danger" id="interrupt-turn">Interrupt</button>
+          </div>
+        </div>
+        <div class="chat-body" id="chat-body"></div>
+        <div class="composer">
+          <textarea id="composer-input" rows="3" placeholder="Ask Codex..."></textarea>
+          <div class="composer-actions">
+            <button class="btn ghost" id="clear-chat">Clear</button>
+            <button class="btn primary" id="send-msg">Send</button>
+          </div>
+        </div>
+      </main>
+
+      <aside class="sidebar right" id="sidebar-right">
+        <div class="sidebar-section">
+          <div class="section-header">
+            <span>Approvals</span>
+            <span class="badge" id="approval-count">0</span>
+          </div>
+          <div class="approval-list" id="approval-list"></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="section-header">
+            <span>Events</span>
+            <button class="btn small" id="clear-log">Clear</button>
+          </div>
+          <div class="event-log" id="event-log"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="session-modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Session Manager</div>
+          <div class="modal-sub">Manage Codex sessions</div>
+        </div>
+        <button class="icon-btn" id="close-sessions">Close</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="tab-btn active" id="tab-active">Active</button>
+        <button class="tab-btn" id="tab-archived">Archived</button>
+        <button class="btn small" id="refresh-sessions">Refresh</button>
+      </div>
+      <input class="filter-input" id="session-search" placeholder="Search sessions" />
+      <div class="session-list" id="session-list"></div>
+    </div>
+  </div>
+  <div class="backdrop" id="backdrop"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

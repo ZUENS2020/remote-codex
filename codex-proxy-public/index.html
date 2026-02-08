@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codex RPC Monitor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="title">Codex RPC Monitor</div>
+    <div class="controls">
+      <span id="status">disconnected</span>
+      <button id="clear">Clear</button>
+    </div>
+  </header>
+
+  <main id="log"></main>
+
+  <footer>
+    <textarea id="input" rows="2" placeholder="发送原始 JSON（会加换行）"></textarea>
+    <button id="send">Send</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
