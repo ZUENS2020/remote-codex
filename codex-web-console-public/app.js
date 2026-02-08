@@ -39,6 +39,7 @@
     nextId: 1,
     pending: new Map(),
     threads: [],
+    localThreads: new Map(),
     activeThreadId: null,
     messagesByThread: new Map(),
     itemIndex: new Map(),
@@ -52,6 +53,51 @@
     approvalPolicy: dom.approvalSelect ? dom.approvalSelect.value : "on-request",
     mode: "full"
   };
+
+  const LOCAL_THREADS_KEY = "codex-web-console-threads-v1";
+
+  function loadLocalThreads() {
+    try {
+      const raw = localStorage.getItem(LOCAL_THREADS_KEY);
+      if (!raw) return;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return;
+      arr.forEach((t) => {
+        if (t && t.id) state.localThreads.set(t.id, t);
+      });
+    } catch {}
+  }
+
+  function persistLocalThreads() {
+    try {
+      const arr = Array.from(state.localThreads.values());
+      localStorage.setItem(LOCAL_THREADS_KEY, JSON.stringify(arr));
+    } catch {}
+  }
+
+  function upsertLocalThread(thread, overrides = {}) {
+    if (!thread || !thread.id) return;
+    const existing = state.localThreads.get(thread.id) || { id: thread.id };
+    const merged = {
+      ...existing,
+      ...thread,
+      ...overrides
+    };
+    state.localThreads.set(thread.id, merged);
+    persistLocalThreads();
+  }
+
+  function updateThreadPreview(threadId, text) {
+    if (!threadId || !text) return;
+    const preview = String(text).replace(/\s+/g, " ").trim().slice(0, 80);
+    if (!preview) return;
+    upsertLocalThread({ id: threadId }, { preview, updatedAt: Math.floor(Date.now() / 1000) });
+  }
+
+  function getLocalThreadList(archived) {
+    const items = Array.from(state.localThreads.values());
+    return items.filter((t) => (archived ? !!t.archived : !t.archived));
+  }
 
   function escapeHtml(str) {
     return String(str)
@@ -208,17 +254,18 @@
     state.ws.send(JSON.stringify({ type: "from-webview", message }));
   }
 
-  function mcpRequest(method, params) {
+  function mcpRequest(method, params, options = {}) {
     const id = String(state.nextId++);
     sendWebviewMessage({ type: "mcp-request", request: { id, method, params } });
     return new Promise((resolve, reject) => {
       state.pending.set(id, { resolve, reject, method });
+      const timeoutMs = options.timeoutMs || 30000;
       setTimeout(() => {
         if (state.pending.has(id)) {
           state.pending.delete(id);
           reject(new Error(`Timeout waiting for ${method}`));
         }
-      }, 30000);
+      }, timeoutMs);
     });
   }
 
@@ -278,10 +325,18 @@
   async function loadSessions(view) {
     const archived = view === "archived";
     try {
-      const res = await mcpRequest("thread/list", { archived, limit: 200 });
-      const data = res.data || res.threads || [];
-      if (archived) state.sessionsArchived = data;
-      else state.sessionsActive = data;
+      const res = await requestThreadList(archived);
+      if (res) {
+        const data = res.data || res.threads || [];
+        data.forEach((t) => upsertLocalThread(t));
+        if (archived) state.sessionsArchived = data;
+        else state.sessionsActive = data;
+      } else {
+        const local = getLocalThreadList(archived);
+        if (archived) state.sessionsArchived = local;
+        else state.sessionsActive = local;
+        logEvent("Session list unavailable. Using local cache.", "warn");
+      }
       renderSessionList();
     } catch (err) {
       logEvent(`Session list failed: ${err.message}`, "error");
@@ -627,8 +682,14 @@
 
   async function loadThreads() {
     try {
-      const res = await mcpRequest("thread/list", { archived: false, limit: 100 });
-      state.threads = res.data || res.threads || [];
+      const res = await requestThreadList(false);
+      if (res) {
+        state.threads = res.data || res.threads || [];
+        state.threads.forEach((t) => upsertLocalThread(t));
+      } else {
+        state.threads = getLocalThreadList(false);
+        logEvent("Thread list unavailable. Using local cache.", "warn");
+      }
       renderThreads();
     } catch (err) {
       logEvent(`Thread list failed: ${err.message}`, "error");
@@ -694,6 +755,7 @@
     dom.chatTitle.textContent = `Thread ${threadId.slice(0, 8)}`;
     const thread = state.threads.find((t) => t.id === threadId);
     dom.chatMeta.textContent = thread ? thread.preview || thread.id : threadId;
+    upsertLocalThread(thread || { id: threadId }, { archived: false, updatedAt: Math.floor(Date.now() / 1000) });
     if (!state.loadedThreads.has(threadId)) {
       try {
         const res = await mcpRequest("thread/resume", { threadId });
@@ -737,6 +799,7 @@
     if (thread && thread.id) {
       state.loadedThreads.add(thread.id);
       state.threads.unshift(thread);
+      upsertLocalThread(thread, { archived: false, updatedAt: Math.floor(Date.now() / 1000) });
       renderThreads();
       await openThread(thread.id);
     }
@@ -792,6 +855,7 @@
       renderMessages();
     }
     dom.composerInput.value = "";
+    updateThreadPreview(state.activeThreadId, text);
 
     const targetThreadId = state.activeThreadId;
     try {
@@ -817,6 +881,7 @@
             state.activeThreadId = thread.id;
             state.threads.unshift(thread);
             state.loadedThreads.add(thread.id);
+            upsertLocalThread(thread, { archived: false, updatedAt: Math.floor(Date.now() / 1000) });
 
             const oldMessages = getThreadMessages(oldThreadId);
             const idx = oldMessages.indexOf(message);
@@ -871,6 +936,7 @@
           registerItemMessage(targetThread, msg);
         }
         msg.text += delta;
+        updateThreadPreview(targetThread, msg.text);
         if (targetThread === state.activeThreadId) {
           ensureMessageRendered(msg, targetThread);
           dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
@@ -909,6 +975,7 @@
         }
         } else if (item.type === "agentMessage") {
           existing.text = item.text;
+          updateThreadPreview(targetThread, item.text);
         }
         if (targetThread === state.activeThreadId) {
           if (existing) ensureMessageRendered(existing, targetThread);
@@ -952,6 +1019,23 @@
       }
 
     logEvent(`Notify ${method}`);
+  }
+
+  function isTimeoutError(err) {
+    return !!(err && err.message && err.message.includes("Timeout waiting for"));
+  }
+
+  async function requestThreadList(archived) {
+    try {
+      return await mcpRequest("thread/list", { archived, limit: 200 }, { timeoutMs: 8000 });
+    } catch (err) {
+      if (!isTimeoutError(err)) {
+        try {
+          return await mcpRequest("thread/list", {}, { timeoutMs: 8000 });
+        } catch {}
+      }
+      return null;
+    }
   }
 
   function handleServerRequest(req) {
@@ -1109,5 +1193,6 @@
     document.body.classList.remove("show-left", "show-right");
   });
 
+  loadLocalThreads();
   connect();
 })();
