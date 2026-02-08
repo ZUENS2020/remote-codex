@@ -1,0 +1,13 @@
+{
+  "port": 8800,
+  "publicDir": "./codex-web-console-public",
+  "authToken": "",
+  "codexPath": "codex",
+  "codexArgs": ["app-server", "--analytics-default-enabled"],
+  "cwd": ".",
+  "logFile": "",
+  "autoReplyUnsupportedRequests": true,
+  "originator": "codex_vscode",
+  "rustLog": "warn",
+  "clientInfo": { "name": "codex_vscode", "title": "Codex Extension", "version": "0.4.71" }
+}

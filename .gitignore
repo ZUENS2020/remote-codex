@@ -4,6 +4,9 @@ node_modules/
 # Logs
 *.log
 
+# Local configs
+*.local.json
+
 # VS Code
 .vscode/
 
