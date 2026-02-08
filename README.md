@@ -7,7 +7,7 @@
 - 直接与 `codex app-server` 通信（JSON‑RPC）
 - 内置会话管理器（查看/打开/重命名/归档）
 - 支持审批面板与事件流
-- 当前仅保留 **Full Access** 模式（与你要求一致）
+- 当前仅保留 **Full Access** 模式
 
 启动：
 
